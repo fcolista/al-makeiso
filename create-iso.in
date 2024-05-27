@@ -1,0 +1,26 @@
+#!/bin/sh
+MAJORVER=%MAJORVER%
+FULLVER=%FULLVER%
+export PROFILENAME=console_enable
+
+cat << EOF > mkimg.${PROFILENAME}.sh
+profile_${PROFILENAME}() {
+        profile_extended
+        kernel_cmdline="$kernel_cmdline console=ttyS0,115200"
+        syslinux_serial="0 115200"
+        local _k _a
+        for _k in \$kernel_flavors; do
+                apks="\$apks linux-\$_k"
+                for _a in \$kernel_addons; do
+                        apks="\$apks \$_a-\$_k"
+                done
+        done
+        apks="\$apks linux-firmware"
+}
+EOF
+
+sh mkimage.sh --tag ${FULLVER} \
+	--outdir /iso \
+	--arch x86_64 \
+	--repository https://dl-cdn.alpinelinux.org/alpine/v${MAJORVER}/main \
+	--profile ${PROFILENAME}

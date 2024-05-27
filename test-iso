@@ -1,0 +1,41 @@
+#!/bin/sh
+ISO=$(ls ./iso/*.iso)
+>qemu.log
+
+countdown()
+(
+  IFS=:
+  set -- $*
+  secs=$(( ${1#0} * 3600 + ${2#0} * 60 + ${3#0} ))
+  while [ $secs -gt 0 ]
+  do
+    sleep 1 &
+    printf "\r%02d:%02d:%02d" $((secs/3600)) $(( (secs/60)%60)) $((secs%60))
+    secs=$(( $secs - 1 ))
+    wait
+  done
+  echo
+)
+
+nohup qemu-system-x86_64 \
+	-m 512 \
+	-boot d \
+	-cdrom $ISO \
+	-enable-kvm \
+	-nographic \
+	-display none \
+   	-serial file:qemu.log \
+	-monitor telnet::4321,server,nowait </dev/null >nohup.out 2>nohup.err &
+
+echo "Wait 90 secs for Alpine to boot up..."
+sleep 1 
+countdown "00:01:30"
+
+nc localhost 4321 <<EOF
+quit
+EOF
+clear
+sleep 0.5
+
+cat qemu.log | grep -q ttyS0 && echo "==> Test OK, Serial enabled!" || echo "Test KO :( - Serial not enabled"
+
