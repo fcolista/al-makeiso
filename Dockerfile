@@ -2,7 +2,7 @@ ARG VERSION
 FROM alpine:${VERSION}
 RUN adduser -D builder \
 	&& echo 'builder  ALL=(ALL) NOPASSWD: ALL' >> /etc/sudoers \
-	&& apk add \
+	&& apk add --no-cache \
 	alpine-sdk alpine-conf syslinux xorriso squashfs-tools \
 	grub grub-efi sudo mtools dosfstools grub-efi
 
